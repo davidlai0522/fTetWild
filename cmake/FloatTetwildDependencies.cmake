@@ -5,6 +5,9 @@
 # Use modern FetchContent for dependency management
 include(FetchContent)
 
+# Set global properties to suppress uninstall targets from subdirectories
+set_property(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS TRUE)
+
 # Set a global preference for STATIC libraries over SHARED ones.
 #set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
 
@@ -71,7 +74,21 @@ if(NOT TARGET igl::core)
     )
     set(LIBIGL_BUILD_STATIC ON CACHE BOOL "" FORCE)
     set(LIBIGL_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(libigl)
+    
+    # Get the source first so we can patch it
+    FetchContent_GetProperties(libigl)
+    if(NOT libigl_POPULATED)
+        FetchContent_Populate(libigl)
+        
+        # Patch the eigen recipe to not use deprecated FetchContent_Populate
+        set(EIGEN_RECIPE_FILE "${libigl_SOURCE_DIR}/cmake/recipes/external/eigen.cmake")
+        file(READ "${EIGEN_RECIPE_FILE}" EIGEN_RECIPE_CONTENT)
+        string(REPLACE "FetchContent_Populate(eigen)" "FetchContent_MakeAvailable(eigen)" EIGEN_RECIPE_CONTENT_MODIFIED "${EIGEN_RECIPE_CONTENT}")
+        file(WRITE "${EIGEN_RECIPE_FILE}" "${EIGEN_RECIPE_CONTENT_MODIFIED}")
+        
+        # Now add the subdirectory
+        add_subdirectory(${libigl_SOURCE_DIR} ${libigl_BINARY_DIR})
+    endif()
 endif()
 
 # Import libigl targets - use FetchContent source directory

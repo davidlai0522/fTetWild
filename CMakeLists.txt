@@ -1,6 +1,18 @@
 # ##############################################################################
 cmake_minimum_required(VERSION 3.20)
+
 project(FloatTetwild)
+
+# Set policy to allow deprecated FetchContent_Populate usage by dependencies
+# This must be set early so it applies to all subdirectories
+if(POLICY CMP0169)
+    cmake_policy(SET CMP0169 OLD)
+endif()
+
+# Make CMake less strict about target name conflicts by setting to OLD behavior 
+# where it was a warning instead of an error (even though it's no longer supported,
+# we'll handle the conflicts manually)
+
 # ##############################################################################
 
 # Detects whether this is a top-level project
@@ -75,6 +87,7 @@ endif()
 
 # Setup dependencies
 include(FloatTetwildDependencies)
+
 igl_include(predicates)
 
 # ##############################################################################
