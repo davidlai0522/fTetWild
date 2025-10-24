@@ -79,13 +79,23 @@ if(NOT TARGET igl::core)
     FetchContent_GetProperties(libigl)
     if(NOT libigl_POPULATED)
         FetchContent_Populate(libigl)
-        
+
         # Patch the eigen recipe to not use deprecated FetchContent_Populate
         set(EIGEN_RECIPE_FILE "${libigl_SOURCE_DIR}/cmake/recipes/external/eigen.cmake")
         file(READ "${EIGEN_RECIPE_FILE}" EIGEN_RECIPE_CONTENT)
-        string(REPLACE "FetchContent_Populate(eigen)" "FetchContent_MakeAvailable(eigen)" EIGEN_RECIPE_CONTENT_MODIFIED "${EIGEN_RECIPE_CONTENT}")
+
+        # Apply both replacements on the same content before writing
+        string(REPLACE "FetchContent_Populate(eigen)" 
+                    "FetchContent_MakeAvailable(eigen)" 
+                    EIGEN_RECIPE_CONTENT_MODIFIED "${EIGEN_RECIPE_CONTENT}")
+
+        string(REPLACE "add_library(Eigen3::Eigen ALIAS Eigen3_Eigen)" 
+                    "# add_library(Eigen3::Eigen ALIAS Eigen3_Eigen)" 
+                    EIGEN_RECIPE_CONTENT_MODIFIED "${EIGEN_RECIPE_CONTENT_MODIFIED}")
+
+        # Write final modified file
         file(WRITE "${EIGEN_RECIPE_FILE}" "${EIGEN_RECIPE_CONTENT_MODIFIED}")
-        
+
         # Now add the subdirectory
         add_subdirectory(${libigl_SOURCE_DIR} ${libigl_BINARY_DIR})
     endif()
